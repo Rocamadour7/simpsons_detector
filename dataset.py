@@ -130,6 +130,7 @@ class Dataset:
 
         self.pointer = 0
 
+    @property
     def next_batch(self):
         inputs = []
         targets = []
