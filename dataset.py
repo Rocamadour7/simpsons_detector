@@ -10,24 +10,25 @@ class Dataset:
         self.img_size = img_size
         self.folder = folder
         self.num_classes = len(os.listdir(os.path.join(folder,'simpsons_dataset')))
-        
-        csv_file = pd.read_csv(os.path.join(self.folder, 'number_pic_char.csv'))
-        
+
+        self.csv_file = pd.read_csv(os.path.join(self.folder, 'number_pic_char.csv'))
+        self.csv_file = self.csv_file.sort_values('name')
+
         train_files, self.train_targets, val_files, self.val_targets, test_files, self.test_targets = self.train_valid_test_split(
-            os.listdir(os.path.join(self.folder, 'simpsons_dataset')), csv_file)
-        
+            os.listdir(os.path.join(self.folder, 'simpsons_dataset')), self.csv_file)
+
         self.characters_index = os.listdir(os.path.join(folder,'simpsons_dataset'))
-        
+
         train_files, self.train_targets = self._shuffle_in_unison(train_files, self.train_targets)
         val_files, self.val_targets = self._shuffle_in_unison(val_files, self.val_targets)
         test_files, self.test_targets = self._shuffle_in_unison(test_files, self.test_targets)
-        
+
         self.train_inputs = self.file_paths_to_images(train_files)
         self.val_inputs = self.file_paths_to_images(val_files)
         self.test_inputs = self.file_paths_to_images(test_files)
 
         self.pointer = 0
-        
+
     def file_paths_to_images(self, files_list):
         inputs = []
         for file in files_list:
@@ -44,10 +45,10 @@ class Dataset:
         val_y = []
         test_X = []
         test_y = []
-        for index, each_char in enumerate(train_dir):
-            test_num = csv.values[index][2]
+        for index, each_char in enumerate(sorted(train_dir)):
+            test_num = csv['test'][index]
             val_num = test_num
-            train_num = csv.values[index][1] - val_num
+            train_num = csv['train'][index] - val_num
             char_dir = os.path.join(self.folder, 'simpsons_dataset', each_char)
             for i in range(train_num):
                 img_name = os.listdir(char_dir)[i]
@@ -75,14 +76,14 @@ class Dataset:
             val_X, val_y,
             test_X, test_y
         )
-        
+
     def _convertToOneHot(self, vector, num_classes=None):
         """
         Converts an input 1-D vector of integers into an output
         2-D array of one-hot vectors, where an i'th input value
         of j will set a '1' in the i'th row, j'th column of the
         output array.
-        
+
         Created by: https://stackoverflow.com/users/4561314/stackoverflowuser2010
 
         Example:
@@ -107,7 +108,7 @@ class Dataset:
         result = np.zeros(shape=(len(vector), num_classes))
         result[np.arange(len(vector)), vector] = 1
         return result.astype(int)
-    
+
     def _shuffle_in_unison(self, a, b):
         '''
         Shuffles two arrays by the same index, using Numpy permutation function.
@@ -119,7 +120,7 @@ class Dataset:
             a[new_index] = a[old_index]
             b[new_index] = b[old_index]
         return a, b
-    
+
     def num_batches_in_epoch(self):
         return int(floor(len(self.train_inputs) / self.batch_size))
 
@@ -141,11 +142,11 @@ class Dataset:
         self.pointer += self.batch_size
 
         return np.array(inputs, dtype=np.uint8), np.array(targets, dtype=np.uint8)
-    
+
     @property
     def val_set(self):
         return np.array(self.val_inputs, dtype=np.uint8), np.array(self.val_targets, dtype=np.uint8)
-    
+
     @property
     def test_set(self):
         return np.array(self.test_inputs, dtype=np.uint8), np.array(self.test_targets, dtype=np.uint8)
