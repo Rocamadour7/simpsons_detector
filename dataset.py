@@ -13,9 +13,10 @@ class Dataset:
 
         self.csv_file = pd.read_csv(os.path.join(self.folder, 'number_pic_char.csv'))
         self.csv_file.sort_values(by='name', inplace=True)
+        self.csv_file.reset_index(drop=True, inplace=True)
 
         train_files, self.train_targets, val_files, self.val_targets, test_files, self.test_targets = self.train_valid_test_split(
-            os.listdir(os.path.join(self.folder, 'simpsons_dataset')), self.csv_file)
+            os.listdir(os.path.join(self.folder, 'simpsons_dataset')))
 
         self.characters_index = os.listdir(os.path.join(folder,'simpsons_dataset'))
 
@@ -38,7 +39,7 @@ class Dataset:
         inputs = np.array(inputs)
         return inputs
 
-    def train_valid_test_split(self, train_dir, csv):
+    def train_valid_test_split(self, train_dir):
         train_X = []
         train_y = []
         val_X = []
@@ -46,9 +47,9 @@ class Dataset:
         test_X = []
         test_y = []
         for index, each_char in enumerate(sorted(train_dir)):
-            test_num = csv['test'][index]
+            test_num = self.csv_file['test'][index]
             val_num = test_num
-            train_num = csv['train'][index] - val_num
+            train_num = self.csv_file['train'][index] - val_num
             char_dir = os.path.join(self.folder, 'simpsons_dataset', each_char)
             for i in range(train_num):
                 img_name = os.listdir(char_dir)[i]
