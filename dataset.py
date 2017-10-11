@@ -12,7 +12,7 @@ class Dataset:
         self.num_classes = len(os.listdir(os.path.join(folder,'simpsons_dataset')))
 
         self.csv_file = pd.read_csv(os.path.join(self.folder, 'number_pic_char.csv'))
-        self.csv_file = self.csv_file.sort_values('name')
+        self.csv_file.sort_values(by='name', inplace=True)
 
         train_files, self.train_targets, val_files, self.val_targets, test_files, self.test_targets = self.train_valid_test_split(
             os.listdir(os.path.join(self.folder, 'simpsons_dataset')), self.csv_file)
