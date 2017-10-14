@@ -8,10 +8,11 @@ IMG_SIZE = 96
 EPOCHS = 50
 dataset = Dataset(batch_size=BATCH_SIZE, img_size=IMG_SIZE)
 NUM_CLASSES = dataset.num_classes
-LR = 0.0001
-NUM_EPOCHS_PER_DECAY = 5
+LR = 0.01
+NUM_EPOCHS_PER_DECAY = 1
 DECAY_STEPS = dataset.num_batches_in_epoch() * NUM_EPOCHS_PER_DECAY
-DECAY_RATE = 0.9999
+DECAY_RATE = 0.999999
+MOMENTUM = 0.9
 
 X = tf.placeholder(dtype=tf.float32, shape=[None, IMG_SIZE, IMG_SIZE, 3], name='input')
 y = tf.placeholder(dtype=tf.float32, shape=[None, NUM_CLASSES], name='ground_truth')
@@ -81,7 +82,7 @@ mean_loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=h_out,
 
 global_step = tf.Variable(0, trainable=False)
 learning_rate = tf.train.exponential_decay(learning_rate=LR, global_step=global_step, decay_steps=DECAY_STEPS, decay_rate=DECAY_RATE)
-optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(mean_loss, global_step=global_step)
+optimizer = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=MOMENTUM, use_nesterov=True).minimize(mean_loss, global_step=global_step)
 
 aug = iaa.SomeOf(4, [
     iaa.Affine(rotate=(-30, 30)),
@@ -94,7 +95,7 @@ aug = iaa.SomeOf(4, [
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     X_val, y_val = dataset.val_set
-    # X_val = np.multiply(X_val, 1/255.)
+    X_val = np.multiply(X_val, 1/255.)
     for epoch_i in range(EPOCHS):
         dataset.reset_batch_pointer()
         losses = []
@@ -103,9 +104,9 @@ with tf.Session() as sess:
             batch_num = epoch_i * dataset.num_batches_in_epoch() + batch_i + 1
             X_batch, y_batch = dataset.next_batch
             X_batch = aug.augment_images(X_batch)
-            # X_batch = np.multiply(X_batch, 1/255.)
+            X_batch = np.multiply(X_batch, 1/255.)
             loss, _, acc_train = sess.run([mean_loss, optimizer, accuracy], feed_dict={X: X_batch, y: y_batch})
-            if batch_num%100 == 0:
+            if batch_num%25 == 0:
                 print('{}/{}, Epoch: {}, Cost: {}, Accuracy: {}'.format(batch_num,
                                                                         EPOCHS * dataset.num_batches_in_epoch(),
                                                                         epoch_i, loss, acc_train))
